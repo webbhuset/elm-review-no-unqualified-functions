@@ -14,5 +14,7 @@
         "jfmengels/elm-review": "2.13.0 <= v < 3.0.0",
         "stil4m/elm-syntax": "7.2.1 <= v < 8.0.0"
     },
-    "test-dependencies": {}
+    "test-dependencies": {
+        "elm-explorations/test": "2.0.1 <= v < 3.0.0"
+    }
 }
