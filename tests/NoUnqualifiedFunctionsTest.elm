@@ -72,4 +72,34 @@ b someValue =
     someValue 2
 """
                         ]
+        , T.test "applying the fix should NOT modify prefixes from other modules" <|
+            \() ->
+                """module A exposing (..)
+
+import B exposing (someValue)
+import B.C as C
+
+a = someValue 1
+
+b = C.someValue 2
+"""
+                    |> RT.run NUF.rule
+                    |> RT.expectErrors
+                        [ RT.error
+                            { message = "Importing functions is not allowed. Use qualified names instead."
+                            , details =
+                                [ "'A' imports 'someValue' from 'B'\n Uses of someValue should be replaced with B.someValue."
+                                ]
+                            , under = "import B exposing (someValue)"
+                            }
+                            |> RT.whenFixed """module A exposing (..)
+
+import B exposing (someValue)
+import B.C as C
+
+a = B.someValue 1
+
+b = C.someValue 2
+"""
+                        ]
         ]

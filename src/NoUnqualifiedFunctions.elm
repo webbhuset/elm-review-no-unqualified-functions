@@ -16,6 +16,7 @@ import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node)
 import Elm.Syntax.Range exposing (Range)
 import Review.Fix as Fix exposing (Fix)
+import Review.ModuleNameLookupTable exposing (ModuleNameLookupTable)
 import Review.Rule as Rule exposing (Error, Rule)
 
 
@@ -23,6 +24,7 @@ type alias Context =
     { currentModuleName : String
     , fixesToApplyByPrefix : Dict String (List Fix)
     , importErrorsByPrefix : Dict String ( { message : String, details : List String }, Range )
+    , lookupTable : ModuleNameLookupTable
     , prefixesToApplyByName : Dict String { matchModule : String, prefix : String }
     }
 
@@ -56,12 +58,7 @@ type alias AboutEachImportExpression =
 -}
 rule : Rule
 rule =
-    Rule.newModuleRuleSchema "NoUnqualifiedFunctions"
-        { currentModuleName = ""
-        , fixesToApplyByPrefix = Dict.empty
-        , importErrorsByPrefix = Dict.empty
-        , prefixesToApplyByName = Dict.empty
-        }
+    Rule.newModuleRuleSchemaUsingContextCreator "NoUnqualifiedFunctions" initialContext
         |> Rule.withModuleDefinitionVisitor moduleDefinitionVisitor
         |> Rule.withImportVisitor (importVisitor |> createsNoErrorsHere)
         |> Rule.withExpressionEnterVisitor (createFixesForUsages |> createsNoErrorsHere)
@@ -73,6 +70,20 @@ rule =
 createsNoErrorsHere : (Node a -> Context -> Context) -> Node a -> Context -> ( List (Error {}), Context )
 createsNoErrorsHere visitor node context =
     ( [], visitor node context )
+
+
+initialContext : Rule.ContextCreator () Context
+initialContext =
+    Rule.initContextCreator
+        (\lookupTable () ->
+            { currentModuleName = ""
+            , fixesToApplyByPrefix = Dict.empty
+            , importErrorsByPrefix = Dict.empty
+            , lookupTable = lookupTable
+            , prefixesToApplyByName = Dict.empty
+            }
+        )
+        |> Rule.withModuleNameLookupTable
 
 
 moduleDefinitionVisitor : Node Module -> Context -> ( List (Error {}), Context )
@@ -181,10 +192,11 @@ createFixesForUsages node oldContext =
                             String.join "." functionModuleName
 
                         ignoreBecauseAlreadyQualified =
-                            flattenedFunctionModuleName == matchModule
+                            functionModuleName /= []
 
                         ignoreBecauseDifferentModule =
-                            flattenedFunctionModuleName /= ""
+                            Review.ModuleNameLookupTable.moduleNameFor oldContext.lookupTable node
+                                == Just functionModuleName
                     in
                     if ignoreBecauseAlreadyQualified then
                         oldContext
@@ -193,19 +205,7 @@ createFixesForUsages node oldContext =
                         oldContext
 
                     else
-                        {- is not qualified; we should fix it(?)
-
-                           This function or value _might_ be shadowing the one
-                           we want to change!
-                           How do we tell that we shouldn't change it?
-
-                               import Foo exposing (baz)
-
-                               baz "This baz should be qualified"
-
-                               f baz =
-                                 baz "This baz should NOT be qualified"
-                        -}
+                        {- is not qualified; we should fix it -}
                         let
                             range =
                                 Node.range node
