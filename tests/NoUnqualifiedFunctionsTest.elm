@@ -102,4 +102,37 @@ a = B.someValue 1
 b = C.someValue 2
 """
                         ]
+        , T.test "applying the fix should NOT replace arguments with similar names inside let blocks" <|
+            \() ->
+                """module A exposing (..)
+
+import B exposing (someValue)
+
+a =
+    let
+        b someValue = someValue == 13
+    in
+    someValue
+"""
+                    |> RT.run NUF.rule
+                    |> RT.expectErrors
+                        [ RT.error
+                            { message = "Importing functions is not allowed. Use qualified names instead."
+                            , details =
+                                [ "'A' imports 'someValue' from 'B'\n Uses of someValue should be replaced with B.someValue."
+                                ]
+                            , under = "import B exposing (someValue)"
+                            }
+                            |> RT.whenFixed """module A exposing (..)
+
+import B exposing (someValue)
+import B.C as C
+
+a =
+    let
+        b someValue = someValue == 13
+    in
+    B.someValue
+"""
+                        ]
         ]
