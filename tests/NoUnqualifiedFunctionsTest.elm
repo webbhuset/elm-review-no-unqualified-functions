@@ -126,7 +126,6 @@ a =
                             |> RT.whenFixed """module A exposing (..)
 
 import B exposing (someValue)
-import B.C as C
 
 a =
     let
