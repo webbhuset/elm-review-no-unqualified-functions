@@ -138,10 +138,6 @@ importVisitor node oldContext =
                                       , details = [ detailsMessage oldContext args ]
                                       }
                                     , Node.range node
-                                      {- Should we provide a fix here for the import expression?
-
-                                         Or... do we let the `NoUnused` rule handle it? 😈
-                                      -}
                                     )
                                 , searchFor = funName
                                 , matchModule = importedModule
