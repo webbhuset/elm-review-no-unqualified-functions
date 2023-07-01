@@ -165,7 +165,6 @@ importVisitor node oldContext =
                                     }
                     }
             in
-            -- could probably do both folds in a single pass...
             nodes
                 |> List.foldl pairWithErrors []
                 |> List.foldl flattenIntoContext oldContext
@@ -231,7 +230,7 @@ matchFixesUpToImportErrors context =
             -> Error {}
         matchHelper ( prefix, ingredients ) =
             let
-                ( info, range {- , importFix -} ) =
+                ( info, range ) =
                     ingredients
 
                 usageFixes : Maybe (List Fix)
@@ -241,11 +240,10 @@ matchFixesUpToImportErrors context =
                 fixes =
                     case usageFixes of
                         Just usages ->
-                            -- importFix ::
                             usages
 
                         Nothing ->
-                            [{- return only the importFix here -}]
+                            []
             in
             Rule.errorWithFix info range fixes
     in
