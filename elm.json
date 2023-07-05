@@ -3,7 +3,7 @@
     "name": "webbhuset/elm-review-no-unqualified-functions",
     "summary": "Provides an elm-review rule to forbid unqualified functions.",
     "license": "MIT",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "exposed-modules": [
         "NoUnqualifiedFunctions"
     ],
