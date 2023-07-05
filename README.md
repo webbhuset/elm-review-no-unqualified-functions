@@ -11,6 +11,16 @@ from other modules, forcing qualified functions.
 - [`NoUnqualifiedFunctions`](NoUnqualifiedFunctions)
 
 
+## Automatic Fixes
+
+The rule provides a fix that will add qualifiers to each unqualified function.
+
+Note that this fix will leave the `exposing ()` section of import statements
+unchanged; the fixes in [jfmengels/review-unused] can remove them.
+
+[jfmengels/review-unused]: https://package.elm-lang.org/packages/jfmengels/review-unused/latest/NoUnused-Variables
+
+
 ## Configuration
 
 ```elm
